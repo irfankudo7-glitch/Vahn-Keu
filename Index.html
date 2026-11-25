@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keuangan Vahn Cell - Pembukuan Harian UMKM</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f6fa;
+            color: #1e293b;
+        }
+        /* Sembunyikan scrollbar pada tab horizontal agar bersih di HP */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Animasi perpindahan tab */
+        .tab-panel {
+            animation: fadeSlide 0.2s ease-out;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Styling input date agar menyatu rapi */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- HEADER BIRU NAVY GRADIEN (SESUAI GAMBAR REFERENSI 2 + LOGO GAMBAR 1) -->
+    <header class="bg-gradient-to-b from-[#153866] to-[#1e4b85] text-white shadow-md">
+        <div class="max-w-3xl mx-auto px-4 pt-5 pb-4">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3.5">
+                    <!-- Logo Vahn Cell (SVG sesuai gambar pertama) -->
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white shadow-md p-1 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                            <defs>
+                                <linearGradient id="vcDarkBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#0f2557" />
+                                    <stop offset="100%" stop-color="#1e3a8a" />
+                                </linearGradient>
+                                <linearGradient id="vcCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#00b4d8" />
+                                    <stop offset="100%" stop-color="#0077b6" />
+                                </linearGradient>
+                                <linearGradient id="ribbonGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#065f46" />
+                                    <stop offset="100%" stop-color="#10b981" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Huruf V -->
+                            <path d="M 16 26 L 34 26 L 46 62 L 38 74 Z" fill="url(#vcDarkBlue)" />
+                            <path d="M 38 74 C 42 52, 54 38, 46 20 C 58 30, 56 54, 44 76 Z" fill="url(#vcDarkBlue)" />
+                            <!-- Huruf C -->
+                            <path d="M 84 24 L 56 24 C 46 38, 44 58, 52 72 L 74 72 L 78 62 L 58 62 C 54 52, 56 38, 64 32 L 80 32 Z" fill="url(#vcCyan)" />
+                            <path d="M 44 76 C 50 56, 62 42, 76 36 C 64 48, 56 62, 52 76 Z" fill="#38bdf8" />
+                            <!-- Pita Hijau -->
+                            <path d="M 34 100 Q 72 78 96 42 L 100 72 Q 86 94 68 100 Z" fill="url(#ribbonGreen)" />
+                            <!-- Rp & Grafik Emas -->
+                            <text x="58" y="88" fill="#fde047" font-family="Arial, sans-serif" font-weight="bold" font-size="14">Rp</text>
+                            <rect x="78" y="82" width="3" height="6" fill="#fde047" rx="0.5"/>
+                            <rect x="83" y="78" width="3" height="10" fill="#fde047" rx="0.5"/>
+                            <rect x="88" y="73" width="3" height="15" fill="#fde047" rx="0.5"/>
+                            <polyline points="77,77 83,72 87,74 92,67" fill="none" stroke="#fde047" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-tight">
+                            Keuangan Vahn Cell
+                        </h1>
+                        <p class="text-xs sm:text-sm text-blue-100/90 mt-0.5">
+                            Pendataan dan pemantauan keuangan usaha.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Indikator Auto-Save -->
+                <div id="saveBadge" class="hidden sm:flex items-center gap-1.5 text-[11px] font-medium bg-white/10 border border-white/20 text-blue-50 px-2.5 py-1 rounded-full">
+                    <i class="fa-solid fa-cloud-check text-emerald-300"></i> Tersimpan
+                </div>
+            </div>
+
+            <!-- BAR NAVIGASI TANGGAL HARIAN -->
+            <div class="mt-4 bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-2 flex flex-wrap items-center justify-between gap-2">
+                <button onclick="changeDate(-1)" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold transition flex items-center gap-1.5 active:scale-95">
+                    <i class="fa-solid fa-chevron-left text-[10px]"></i> Kemarin
+                </button>
+
+                <div class="flex flex-col items-center text-center">
+                    <span id="fullDateLabel" class="text-xs sm:text-sm font-bold text-white tracking-wide">
+                        Rabu, 25 November 2026
+                    </span>
+                    <input type="date" id="datePicker" onchange="selectDate(this.value)" class="text-[11px] text-blue-200 bg-transparent border-none focus:outline-none cursor-pointer text-center mt-0.5">
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <button onclick="copyFromYesterday()" title="Salin saldo & nama akun dari kemarin" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/90 hover:bg-emerald-500 text-white text-xs font-semibold transition flex items-center gap-1 active:scale-95">
+                        <i class="fa-regular fa-copy"></i> <span class="hidden sm:inline">Salin Kemarin</span>
+                    </button>
+                    <button onclick="changeDate(1)" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold transition flex items-center gap-1.5 active:scale-95">
+                        Besok <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-grow max-w-3xl w-full mx-auto px-3.5 sm:px-4 py-4 space-y-3.5">
+
+        <!-- BARIS 1: 3 KARTU RINGKASAN SEJAJAR MENYAMPING (GRID 3 KOLOM) -->
+        <section aria-label="Ringkasan Tiga Sumber" class="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+            
+            <!-- Kartu 1: Total Hari Ini -->
+            <div onclick="switchTab('tab1')" class="cursor-pointer bg-white rounded-2xl p-3 sm:p-4 shadow-xs border border-slate-200/80 hover:border-blue-300 transition flex flex-col justify-between">
+                <div class="flex items-start gap-1.5 sm:gap-2">
+                    <span class="text-sm sm:text-base leading-none mt-0.5" role="img" aria-label="koper">💼</span>
+                    <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 leading-tight">
+                        TOTAL HARI INI
+                    </span>
+                </div>
+                <div id="cardTotalHariIni" class="text-sm sm:text-lg font-extrabold text-slate-900 mt-2.5 truncate">
+                    Rp 0
+                </div>
+            </div>
+
+            <!-- Kartu 2: Tabungan Terpakai -->
+            <div onclick="switchTab('tab2')" class="cursor-pointer bg-white rounded-2xl p-3 sm:p-4 shadow-xs border border-slate-200/80 hover:border-blue-300 transition flex flex-col justify-between">
+                <div class="flex items-start gap-1.5 sm:gap-2">
+                    <span class="text-sm sm:text-base leading-none mt-0.5" role="img" aria-label="bank">🏦</span>
+                    <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 leading-tight">
+                        TABUNGAN TERPAKAI
+                    </span>
+                </div>
+                <div id="cardTabunganTerpakai" class="text-sm sm:text-lg font-extrabold text-slate-900 mt-2.5 truncate">
+                    Rp 0
+                </div>
+            </div>
+
+            <!-- Kartu 3: Titipan Terpakai -->
+            <div onclick="switchTab('tab3')" class="cursor-pointer bg-white rounded-2xl p-3 sm:p-4 shadow-xs border border-slate-200/80 hover:border-blue-300 transition flex flex-col justify-between">
+                <div class="flex items-start gap-1.5 sm:gap-2">
+                    <span class="text-sm sm:text-base leading-none mt-0.5" role="img" aria-label="titipan">🤝</span>
+                    <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 leading-tight">
+                        TITIPAN TERPAKAI
+                    </span>
+                </div>
+                <div id="cardTitipanTerpakai" class="text-sm sm:text-lg font-extrabold text-slate-900 mt-2.5 truncate">
+                    Rp 0
+                </div>
+            </div>
+
+        </section>
+
+        <!-- BARIS 2: KARTU BESAR TOTAL MODAL & SELISIH KEUANGAN (MENYAMPING DI LAYAR LEBAR / TERSUSUN RAPI DI HP) -->
+        <section aria-label="Total Modal dan Selisih Keuangan" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            
+            <!-- Poin 4: TOTAL MODAL (Modal Murni Toko = 1 - 2 - 3) -->
+            <div onclick="switchTab('tab4')" class="cursor-pointer bg-white rounded-2xl p-5 shadow-xs border border-slate-200/90 hover:border-blue-300 transition text-center flex flex-col items-center justify-center">
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-600">
+                    TOTAL MODAL
+                </span>
+                <div id="cardTotalModal" class="text-3xl sm:text-4xl font-extrabold text-slate-900 my-1.5 tracking-tight">
+                    Rp 0
+                </div>
+                <span class="text-xs font-bold uppercase tracking-wider text-[#163a69]">
+                    MODAL MURNI TOKO
+                </span>
+                <p class="text-[11px] text-slate-400 mt-1.5">
+                    Total Hari Ini &minus; Tabungan &minus; Titipan
+                </p>
+            </div>
+
+            <!-- Poin 5: SELISIH KEUANGAN (Hijau jika bertambah, Merah jika berkurang + Penyebab Selisih) -->
+            <div id="boxSelisih" onclick="switchTab('tab5')" class="cursor-pointer bg-white rounded-2xl p-5 shadow-xs border border-slate-200/90 transition-colors duration-300 text-center flex flex-col items-center justify-center">
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-600">
+                    SELISIH KEUANGAN
+                </span>
+                <div id="cardSelisihValue" class="text-3xl sm:text-4xl font-extrabold text-slate-800 my-1.5 tracking-tight">
+                    Rp 0
+                </div>
+                <span id="cardSelisihStatus" class="text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                    SEIMBANG
+                </span>
+                <!-- Penyebab selisih dari kolom 5 dengan huruf lebih kecil -->
+                <p id="cardSelisihReason" class="text-[11px] sm:text-xs text-slate-500 mt-1.5 line-clamp-2 max-w-xs">
+                    Belum ada catatan penyebab selisih
+                </p>
+            </div>
+
+        </section>
+
+        <!-- BARIS 3: SUB-MENU TAB HORIZONTAL BERBENTUK PILL (BISA DIGESER MENYAMPING) -->
+        <nav aria-label="Menu Kategori Pembukuan" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            <button id="btn-tab1" onclick="switchTab('tab1')" class="tab-btn shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs bg-[#163a69] text-white border border-[#163a69]">
+                1. Total Hari Ini
+            </button>
+            <button id="btn-tab2" onclick="switchTab('tab2')" class="tab-btn shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition shadow-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+                2. Tabungan Terpakai
+            </button>
+            <button id="btn-tab3" onclick="switchTab('tab3')" class="tab-btn shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition shadow-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+                3. Titipan Terpakai
+            </button>
+            <button id="btn-tab4" onclick="switchTab('tab4')" class="tab-btn shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition shadow-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+                4. Total Modal
+            </button>
+            <button id="btn-tab5" onclick="switchTab('tab5')" class="tab-btn shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition shadow-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+                5. Penyebab Selisih
+            </button>
+        </nav>
+
+        <!-- BARIS 4: AREA KONTEN TAB (KARTU PUTIH BERSIH SESUAI GAMBAR REFERENSI 2) -->
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-xs border border-slate-200/90">
+
+            <!-- KONTEN TAB 1: TOTAL HARI INI (BRI, Mandiri, BCA, BNI, BSI, Seabank, dll) -->
+            <div id="panel-tab1" class="tab-panel">
+                <div class="mb-4">
+                    <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Total Hari Ini</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        Catat saldo modal pada setiap rekening atau sumber modal (BRI, Mandiri, BCA, BNI, BSI, Seabank, dll).
+                    </p>
+                </div>
+
+                <!-- Header Tabel -->
+                <div class="grid grid-cols-12 gap-2 pb-2.5 border-b border-slate-100 text-[11px] sm:text-xs font-bold text-slate-500 px-1">
+                    <div class="col-span-1">No.</div>
+                    <div class="col-span-5">Nama rekening / sumber</div>
+                    <div class="col-span-4">Nominal (Rp)</div>
+                    <div class="col-span-2 text-right">Aksi</div>
+                </div>
+
+                <!-- Baris Data Kolom 1 -->
+                <div id="rows-col1" class="divide-y divide-slate-100">
+                    <!-- Dirender via JS -->
+                </div>
+
+                <!-- Tombol Tambah Baris -->
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <button onclick="addRow('col1')" class="px-4 py-2 rounded-xl bg-[#163a69] hover:bg-[#1e4b85] text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-xs active:scale-95">
+                        <i class="fa-solid fa-plus"></i> Tambah Baris
+                    </button>
+                    <div class="text-xs sm:text-sm font-bold text-slate-700">
+                        Subtotal: <span id="sub-tab1" class="text-[#163a69]">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KONTEN TAB 2: TABUNGAN TERPAKAI (BCA, BRI, Superbank, Kontrakan, dll) -->
+            <div id="panel-tab2" class="tab-panel hidden">
+                <div class="mb-4">
+                    <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Tabungan Terpakai</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        Catat uang tabungan yang terpakai untuk membantu modal toko (BCA, BRI, Superbank, Kontrakan, dll).
+                    </p>
+                </div>
+
+                <!-- Header Tabel -->
+                <div class="grid grid-cols-12 gap-2 pb-2.5 border-b border-slate-100 text-[11px] sm:text-xs font-bold text-slate-500 px-1">
+                    <div class="col-span-1">No.</div>
+                    <div class="col-span-5">Nama Tabungan / Pos</div>
+                    <div class="col-span-4">Nominal (Rp)</div>
+                    <div class="col-span-2 text-right">Aksi</div>
+                </div>
+
+                <!-- Baris Data Kolom 2 -->
+                <div id="rows-col2" class="divide-y divide-slate-100">
+                    <!-- Dirender via JS -->
+                </div>
+
+                <!-- Tombol Tambah Baris -->
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <button onclick="addRow('col2')" class="px-4 py-2 rounded-xl bg-[#163a69] hover:bg-[#1e4b85] text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-xs active:scale-95">
+                        <i class="fa-solid fa-plus"></i> Tambah Baris
+                    </button>
+                    <div class="text-xs sm:text-sm font-bold text-slate-700">
+                        Subtotal: <span id="sub-tab2" class="text-[#163a69]">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KONTEN TAB 3: TITIPAN TERPAKAI (Nama Penitip & Nominal) -->
+            <div id="panel-tab3" class="tab-panel hidden">
+                <div class="mb-4">
+                    <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Titipan Terpakai</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        Catat nama orang yang menitipkan uang beserta nominalnya untuk menambah modal sementara.
+                    </p>
+                </div>
+
+                <!-- Header Tabel -->
+                <div class="grid grid-cols-12 gap-2 pb-2.5 border-b border-slate-100 text-[11px] sm:text-xs font-bold text-slate-500 px-1">
+                    <div class="col-span-1">No.</div>
+                    <div class="col-span-5">Nama Penitip</div>
+                    <div class="col-span-4">Nominal (Rp)</div>
+                    <div class="col-span-2 text-right">Aksi</div>
+                </div>
+
+                <!-- Baris Data Kolom 3 -->
+                <div id="rows-col3" class="divide-y divide-slate-100">
+                    <!-- Dirender via JS -->
+                </div>
+
+                <!-- Tombol Tambah Baris -->
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <button onclick="addRow('col3')" class="px-4 py-2 rounded-xl bg-[#163a69] hover:bg-[#1e4b85] text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-xs active:scale-95">
+                        <i class="fa-solid fa-plus"></i> Tambah Baris
+                    </button>
+                    <div class="text-xs sm:text-sm font-bold text-slate-700">
+                        Subtotal: <span id="sub-tab3" class="text-[#163a69]">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KONTEN TAB 4: RINCIAN TOTAL MODAL MURNI -->
+            <div id="panel-tab4" class="tab-panel hidden">
+                <div class="mb-4">
+                    <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Rincian Total Modal</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        Perhitungan modal murni toko tanpa bantuan uang tabungan dan uang titipan.
+                    </p>
+                </div>
+
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-3 text-sm">
+                    <div class="flex items-center justify-between py-1 border-b border-slate-200/70">
+                        <span class="text-slate-600 font-medium">1. Total Hari Ini (Seluruh Rekening)</span>
+                        <span id="detail-sum1" class="font-bold text-slate-900">Rp 0</span>
+                    </div>
+                    <div class="flex items-center justify-between py-1 border-b border-slate-200/70">
+                        <span class="text-slate-600 font-medium">2. Dikurangi Tabungan Terpakai</span>
+                        <span id="detail-sum2" class="font-bold text-amber-700">- Rp 0</span>
+                    </div>
+                    <div class="flex items-center justify-between py-1 border-b border-slate-200/70">
+                        <span class="text-slate-600 font-medium">3. Dikurangi Titipan Terpakai</span>
+                        <span id="detail-sum3" class="font-bold text-purple-700">- Rp 0</span>
+                    </div>
+                    <div class="flex items-center justify-between pt-2">
+                        <span class="font-extrabold text-[#163a69] text-base">Total Modal Murni Hari Ini</span>
+                        <span id="detail-modal-today" class="font-extrabold text-[#163a69] text-lg">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Perbandingan Kemarin vs Hari Ini -->
+                <div class="mt-4 bg-blue-50/70 rounded-xl p-4 border border-blue-100 space-y-2 text-xs sm:text-sm">
+                    <div class="font-bold text-blue-950 flex items-center gap-1.5">
+                        <i class="fa-solid fa-scale-balanced text-blue-700"></i> Perbandingan Dengan Hari Sebelumnya
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Total Modal Kemarin:</span>
+                        <span id="detail-modal-yesterday" class="font-bold text-slate-800">Belum ada data</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Selisih Perubahan:</span>
+                        <span id="detail-selisih" class="font-extrabold text-slate-800">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KONTEN TAB 5: PENYEBAB SELISIH -->
+            <div id="panel-tab5" class="tab-panel hidden">
+                <div class="mb-4">
+                    <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Penyebab Selisih</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        Tuliskan alasan kenapa nilai Total Modal bertambah atau berkurang dibanding kemarin.
+                    </p>
+                </div>
+
+                <div class="space-y-3">
+                    <textarea 
+                        id="inputReason" 
+                        rows="4" 
+                        oninput="updateReason(this.value)"
+                        placeholder="Contoh: Untung penjualan harian Rp 250.000, atau dipinjam untuk keperluan toko Rp 100.000..."
+                        class="w-full rounded-xl border border-slate-300 p-3.5 text-sm text-slate-800 focus:ring-2 focus:ring-[#163a69] focus:border-[#163a69] outline-none transition"
+                    ></textarea>
+
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 block mb-2">Pilih Tag Cepat:</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="appendReasonTag('Keuntungan harian')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
+                                + Keuntungan Harian
+                            </button>
+                            <button type="button" onclick="appendReasonTag('Pinjaman')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition">
+                                + Pinjaman
+                            </button>
+                            <button type="button" onclick="appendReasonTag('Operasional / Sparepart')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">
+                                + Operasional / Sparepart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- UTILITAS BAWAH: SALIN LAPORAN WA, BACKUP JSON, RESET -->
+        <section class="flex flex-wrap items-center justify-between gap-2 pt-2 pb-6">
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="copyWhatsAppReport()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition flex items-center gap-1.5 active:scale-95">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> Salin Laporan WA
+                </button>
+                <button onclick="exportBackupJSON()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-xs transition flex items-center gap-1.5 active:scale-95">
+                    <i class="fa-solid fa-download"></i> Backup JSON
+                </button>
+            </div>
+
+            <button onclick="openResetModal()" class="px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-semibold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-left"></i> Reset Hari Ini
+            </button>
+        </section>
+
+    </main>
+
+    <!-- TOAST NOTIFIKASI -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 text-xs font-semibold whitespace-nowrap">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastMsg">Tersimpan</span>
+    </div>
+
+    <!-- MODAL KONFIRMASI RESET -->
+    <div id="resetModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl border border-slate-200">
+            <h3 class="text-base font-extrabold text-slate-900">Reset Nominal Hari Ini?</h3>
+            <p class="text-xs sm:text-sm text-slate-600 mt-1.5">
+                Semua nominal pada tanggal <strong id="resetModalDate"></strong> akan dikembalikan ke 0. Data tanggal lain tetap aman.
+            </p>
+            <div class="flex items-center justify-end gap-2 mt-5">
+                <button onclick="closeResetModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                    Batal
+                </button>
+                <button onclick="confirmResetToday()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white">
+                    Ya, Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const STORAGE_KEY = 'vahn_cell_bookkeeping_v2';
+        const HARI_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const BULAN_ID = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+
+        // Daftar default yang bersih (tidak akan pernah muncul 'undefined')
+        const DEFAULT_COL1 = [
+            { name: 'BRI', amount: 0 },
+            { name: 'Mandiri', amount: 0 },
+            { name: 'BCA', amount: 0 },
+            { name: 'BNI', amount: 0 },
+            { name: 'BSI', amount: 0 },
+            { name: 'Seabank', amount: 0 }
+        ];
+
+        const DEFAULT_COL2 = [
+            { name: 'BCA', amount: 0 },
+            { name: 'BRI', amount: 0 },
+            { name: 'Superbank', amount: 0 },
+            { name: 'Kontrakan', amount: 0 }
+        ];
+
+        const DEFAULT_COL3 = [
+            { name: 'Titipan Pelanggan 1', amount: 0 }
+        ];
+
+        let db = {};
+        let currentDate = getTodayStr();
+        let activeTab = 'tab1';
+
+        // --- UTILITAS TANGGAL & FORMAT ANGKA ---
+        function getTodayStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function shiftDateStr(dateStr, days) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            dt.setDate(dt.getDate() + days);
+            return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatIndoFullDate(dateStr) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            return `${HARI_ID[dt.getDay()]}, ${d} ${BULAN_ID[m - 1]} ${y}`;
+        }
+
+        function formatRp(num) {
+            const val = Number(num) || 0;
+            const neg = val < 0;
+            const absStr = Math.abs(Math.round(val)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return (neg ? "-Rp " : "Rp ") + absStr;
+        }
+
+        function formatInputNumber(num) {
+            const val = Number(num) || 0;
+            if (val === 0) return '0';
+            return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function parseInputNumber(str) {
+            if (!str) return 0;
+            const digits = str.toString().replace(/[^0-9]/g, '');
+            return digits ? parseInt(digits, 10) : 0;
+        }
+
+        function safeText(val) {
+            return (val === undefined || val === null) ? '' : String(val);
+        }
+
+        function escapeAttr(str) {
+            return safeText(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        // --- PENYIMPANAN LOCALSTORAGE ---
+        function loadDB() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                db = raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                db = {};
+            }
+        }
+
+        function saveDB() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+            } catch (e) {
+                console.error('Gagal menyimpan:', e);
+            }
+        }
+
+        function getRecord(dateStr) {
+            if (!db[dateStr]) {
+                const prevStr = shiftDateStr(dateStr, -1);
+                if (db[prevStr]) {
+                    db[dateStr] = {
+                        col1: (db[prevStr].col1 || []).map(item => ({ name: safeText(item.name), amount: 0 })),
+                        col2: (db[prevStr].col2 || []).map(item => ({ name: safeText(item.name), amount: 0 })),
+                        col3: (db[prevStr].col3 || []).map(item => ({ name: safeText(item.name), amount: 0 })),
+                        reason: ''
+                    };
+                } else {
+                    db[dateStr] = {
+                        col1: JSON.parse(JSON.stringify(DEFAULT_COL1)),
+                        col2: JSON.parse(JSON.stringify(DEFAULT_COL2)),
+                        col3: JSON.parse(JSON.stringify(DEFAULT_COL3)),
+                        reason: ''
+                    };
+                }
+                saveDB();
+            }
+            return db[dateStr];
+        }
+
+        // --- NAVIGASI TAB ---
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition shadow-xs bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
+            });
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = 'tab-btn shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs bg-[#163a69] text-white border border-[#163a69]';
+                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+            const activePanel = document.getElementById(`panel-${tabId}`);
+            if (activePanel) activePanel.classList.remove('hidden');
+        }
+
+        // --- NAVIGASI TANGGAL ---
+        function selectDate(newDate) {
+            if (!newDate) return;
+            currentDate = newDate;
+            renderAll();
+        }
+
+        function changeDate(offset) {
+            currentDate = shiftDateStr(currentDate, offset);
+            renderAll();
+        }
+
+        function copyFromYesterday() {
+            const prevStr = shiftDateStr(currentDate, -1);
+            if (!db[prevStr]) {
+                showToast('Belum ada data pada tanggal kemarin', 'warn');
+                return;
+            }
+            const prev = db[prevStr];
+            db[currentDate] = {
+                col1: (prev.col1 || []).map(item => ({ name: safeText(item.name), amount: Number(item.amount) || 0 })),
+                col2: (prev.col2 || []).map(item => ({ name: safeText(item.name), amount: Number(item.amount) || 0 })),
+                col3: (prev.col3 || []).map(item => ({ name: safeText(item.name), amount: Number(item.amount) || 0 })),
+                reason: ''
+            };
+            saveDB();
+            renderAll();
+            showToast('Saldo & akun kemarin berhasil disalin');
+        }
+
+        // --- CRUD BARIS TABEL ---
+        function addRow(colKey) {
+            const rec = getRecord(currentDate);
+            rec[colKey].push({ name: '', amount: 0 });
+            saveDB();
+            renderTableRows(colKey);
+            recalculate();
+        }
+
+        function deleteRow(colKey, index) {
+            const rec = getRecord(currentDate);
+            rec[colKey].splice(index, 1);
+            saveDB();
+            renderTableRows(colKey);
+            recalculate();
+        }
+
+        function onNameChange(colKey, index, val) {
+            const rec = getRecord(currentDate);
+            if (rec[colKey][index]) {
+                rec[colKey][index].name = val;
+                saveDB();
+            }
+        }
+
+        function onAmountChange(colKey, index, inputEl) {
+            const num = parseInputNumber(inputEl.value);
+            inputEl.value = formatInputNumber(num);
+            const rec = getRecord(currentDate);
+            if (rec[colKey][index]) {
+                rec[colKey][index].amount = num;
+                saveDB();
+                recalculate();
+            }
+        }
+
+        function onAmountFocus(inputEl) {
+            if (inputEl.value === '0') {
+                inputEl.value = '';
+            }
+        }
+
+        function onAmountBlur(inputEl) {
+            if (inputEl.value.trim() === '') {
+                inputEl.value = '0';
+            }
+        }
+
+        function updateReason(val) {
+            const rec = getRecord(currentDate);
+            rec.reason = val;
+            saveDB();
+            renderReasonPreview(val);
+        }
+
+        function appendReasonTag(tag) {
+            const el = document.getElementById('inputReason');
+            const cur = el.value.trim();
+            const next = cur ? `${cur}, ${tag}` : tag;
+            el.value = next;
+            updateReason(next);
+        }
+
+        // --- RENDER BARIS TABEL (MENIRU LAYOUT GAMBAR REFERENSI 2) ---
+        function renderTableRows(colKey) {
+            const container = document.getElementById(`rows-${colKey}`);
+            const rec = getRecord(currentDate);
+            const rows = rec[colKey] || [];
+
+            const placeholders = {
+                col1: 'Nama rekening / sumber',
+                col2: 'Nama tabungan',
+                col3: 'Nama penitip'
+            };
+
+            if (rows.length === 0) {
+                container.innerHTML = `
+                    <div class="py-6 text-center text-xs text-slate-400">
+                        Belum ada baris data. Klik <strong>+ Tambah Baris</strong> di bawah.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = rows.map((row, idx) => {
+                const nameVal = safeText(row.name);
+                const amountVal = formatInputNumber(row.amount);
+                return `
+                    <div class="grid grid-cols-12 gap-2 items-center py-2.5 px-1">
+                        <div class="col-span-1 text-xs sm:text-sm font-semibold text-slate-600">
+                            ${idx + 1}
+                        </div>
+                        <div class="col-span-5">
+                            <input 
+                                type="text" 
+                                value="${escapeAttr(nameVal)}" 
+                                placeholder="${placeholders[colKey]}"
+                                oninput="onNameChange('${colKey}', ${idx}, this.value)"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs sm:text-sm font-medium text-slate-800 focus:border-[#163a69] focus:ring-1 focus:ring-[#163a69] outline-none transition"
+                            >
+                        </div>
+                        <div class="col-span-4">
+                            <input 
+                                type="text" 
+                                inputmode="numeric"
+                                value="${amountVal}" 
+                                onfocus="onAmountFocus(this)"
+                                onblur="onAmountBlur(this)"
+                                oninput="onAmountChange('${colKey}', ${idx}, this)"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs sm:text-sm font-semibold text-slate-800 focus:border-[#163a69] focus:ring-1 focus:ring-[#163a69] outline-none transition"
+                            >
+                        </div>
+                        <div class="col-span-2 flex justify-end">
+                            <button 
+                                type="button"
+                                onclick="deleteRow('${colKey}', ${idx})" 
+                                class="px-2.5 py-1.5 rounded-lg bg-[#fde8e8] hover:bg-[#fbd5d5] text-[#c81e1e] text-[11px] sm:text-xs font-semibold transition active:scale-95"
+                            >
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- PERHITUNGAN OTOMATIS ---
+        function calcDateSummary(dateStr) {
+            const rec = db[dateStr];
+            if (!rec) return null;
+            const s1 = (rec.col1 || []).reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+            const s2 = (rec.col2 || []).reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+            const s3 = (rec.col3 || []).reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+            return {
+                s1,
+                s2,
+                s3,
+                modal: s1 - s2 - s3
+            };
+        }
+
+        function recalculate() {
+            const cur = calcDateSummary(currentDate) || { s1: 0, s2: 0, s3: 0, modal: 0 };
+
+            // Update 3 Kartu Atas
+            document.getElementById('cardTotalHariIni').textContent = formatRp(cur.s1);
+            document.getElementById('cardTabunganTerpakai').textContent = formatRp(cur.s2);
+            document.getElementById('cardTitipanTerpakai').textContent = formatRp(cur.s3);
+
+            // Update Subtotal di masing-masing tab
+            document.getElementById('sub-tab1').textContent = formatRp(cur.s1);
+            document.getElementById('sub-tab2').textContent = formatRp(cur.s2);
+            document.getElementById('sub-tab3').textContent = formatRp(cur.s3);
+
+            // Update Tab 4 Rincian
+            document.getElementById('detail-sum1').textContent = formatRp(cur.s1);
+            document.getElementById('detail-sum2').textContent = `- ${formatRp(cur.s2)}`;
+            document.getElementById('detail-sum3').textContent = `- ${formatRp(cur.s3)}`;
+            document.getElementById('detail-modal-today').textContent = formatRp(cur.modal);
+
+            // Update Kartu Besar Total Modal (Poin 4)
+            document.getElementById('cardTotalModal').textContent = formatRp(cur.modal);
+
+            // Hitung Selisih dengan Kemarin
+            const prevStr = shiftDateStr(currentDate, -1);
+            const prev = calcDateSummary(prevStr);
+            const diff = prev ? (cur.modal - prev.modal) : 0;
+
+            document.getElementById('detail-modal-yesterday').textContent = prev ? formatRp(prev.modal) : 'Belum ada data';
+            document.getElementById('detail-selisih').textContent = prev ? `${diff > 0 ? '+' : ''}${formatRp(diff)}` : 'Rp 0';
+
+            updateSelisihCard(diff, prev !== null);
+        }
+
+        function updateSelisihCard(diff, hasPrev) {
+            const box = document.getElementById('boxSelisih');
+            const valEl = document.getElementById('cardSelisihValue');
+            const statusEl = document.getElementById('cardSelisihStatus');
+
+            box.className = 'cursor-pointer rounded-2xl p-5 shadow-xs border transition-colors duration-300 text-center flex flex-col items-center justify-center';
+
+            if (!hasPrev || diff === 0) {
+                box.classList.add('bg-white', 'border-slate-200/90');
+                valEl.className = 'text-3xl sm:text-4xl font-extrabold text-slate-800 my-1.5 tracking-tight';
+                valEl.textContent = formatRp(0);
+                statusEl.className = 'text-xs font-extrabold uppercase tracking-wider text-slate-700';
+                statusEl.textContent = hasPrev ? 'SEIMBANG' : 'SEIMBANG (HARI PERTAMA)';
+            } else if (diff > 0) {
+                // BERTAMBAH -> HIJAU
+                box.classList.add('bg-emerald-50/80', 'border-emerald-300');
+                valEl.className = 'text-3xl sm:text-4xl font-extrabold text-emerald-600 my-1.5 tracking-tight';
+                valEl.textContent = `+${formatRp(diff)}`;
+                statusEl.className = 'text-xs font-extrabold uppercase tracking-wider text-emerald-700';
+                statusEl.textContent = 'BERTAMBAH (UNTUNG / SURPLUS)';
+            } else {
+                // BERKURANG -> MERAH
+                box.classList.add('bg-rose-50/80', 'border-rose-300');
+                valEl.className = 'text-3xl sm:text-4xl font-extrabold text-rose-600 my-1.5 tracking-tight';
+                valEl.textContent = formatRp(diff);
+                statusEl.className = 'text-xs font-extrabold uppercase tracking-wider text-rose-700';
+                statusEl.textContent = 'BERKURANG (PINJAMAN / KELUAR)';
+            }
+        }
+
+        function renderReasonPreview(text) {
+            const el = document.getElementById('cardSelisihReason');
+            const clean = safeText(text).trim();
+            if (clean) {
+                el.textContent = clean;
+                el.className = 'text-[11px] sm:text-xs font-semibold text-slate-700 mt-1.5 line-clamp-2 max-w-xs';
+            } else {
+                el.textContent = 'Belum ada catatan penyebab selisih';
+                el.className = 'text-[11px] sm:text-xs text-slate-400 mt-1.5 line-clamp-2 max-w-xs';
+            }
+        }
+
+        function renderAll() {
+            document.getElementById('datePicker').value = currentDate;
+            document.getElementById('fullDateLabel').textContent = formatIndoFullDate(currentDate);
+
+            const rec = getRecord(currentDate);
+            renderTableRows('col1');
+            renderTableRows('col2');
+            renderTableRows('col3');
+
+            document.getElementById('inputReason').value = safeText(rec.reason);
+            renderReasonPreview(rec.reason);
+
+            recalculate();
+        }
+
+        // --- EKSPOR WHATSAPP, BACKUP JSON & RESET ---
+        function copyWhatsAppReport() {
+            const cur = calcDateSummary(currentDate) || { s1: 0, s2: 0, s3: 0, modal: 0 };
+            const prevStr = shiftDateStr(currentDate, -1);
+            const prev = calcDateSummary(prevStr);
+            const diff = prev ? (cur.modal - prev.modal) : 0;
+            const rec = getRecord(currentDate);
+
+            const report = `*KEUANGAN VAHN CELL*\n` +
+                `Tanggal: ${formatIndoFullDate(currentDate)}\n` +
+                `------------------------\n` +
+                `1. Total Hari Ini: ${formatRp(cur.s1)}\n` +
+                `2. Tabungan Terpakai: ${formatRp(cur.s2)}\n` +
+                `3. Titipan Terpakai: ${formatRp(cur.s3)}\n` +
+                `------------------------\n` +
+                `*4. TOTAL MODAL: ${formatRp(cur.modal)}*\n` +
+                `*5. SELISIH: ${diff > 0 ? '+' : ''}${formatRp(diff)}*\n` +
+                `Catatan: ${safeText(rec.reason).trim() || '-'}`;
+
+            const ta = document.createElement('textarea');
+            ta.value = report;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+
+            showToast('Laporan WhatsApp berhasil disalin');
+        }
+
+        function exportBackupJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute('href', dataStr);
+            a.setAttribute('download', `backup-keuangan-vahn-cell-${currentDate}.json`);
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast('File backup JSON berhasil diunduh');
+        }
+
+        function openResetModal() {
+            document.getElementById('resetModalDate').textContent = formatIndoFullDate(currentDate);
+            const modal = document.getElementById('resetModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('resetModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmResetToday() {
+            const rec = getRecord(currentDate);
+            rec.col1.forEach(r => r.amount = 0);
+            rec.col2.forEach(r => r.amount = 0);
+            rec.col3.forEach(r => r.amount = 0);
+            rec.reason = '';
+            saveDB();
+            renderAll();
+            closeResetModal();
+            showToast('Data hari ini telah di-reset ke 0');
+        }
+
+        let toastTimer;
+        function showToast(msg, type = 'ok') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMsg').textContent = msg;
+            icon.className = type === 'warn'
+                ? 'fa-solid fa-circle-exclamation text-amber-400'
+                : 'fa-solid fa-circle-check text-emerald-400';
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2600);
+        }
+
+        // --- INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadDB();
+            renderAll();
+        });
+    </script>
+</body>
+</html>
